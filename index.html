@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Expense Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body { font-family: Arial; background:#f4f6f8; padding:20px; }
+    .card { background:#fff; padding:15px; margin-bottom:20px; border-radius:8px; }
+    h2 { margin-top:0; }
+    input, select, button {
+      width:100%; padding:8px; margin-bottom:10px;
+    }
+    button { background:#2563eb; color:#fff; border:none; border-radius:4px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:8px; border-bottom:1px solid #ddd; font-size:14px; }
+    .locked { color:red; font-size:12px; }
+  </style>
+</head>
+
+<body>
+
+<h2>💸 Expense Tracker</h2>
+
+<div class="card">
+  <h3>Add / Edit Expense</h3>
+  <input type="hidden" id="expenseId">
+
+  <input type="date" id="date">
+  <input type="text" id="enteredBy" placeholder="Entered By">
+
+  <select id="category">
+    <option value="">Category</option>
+    <option>Food</option><option>Fast Food</option><option>Drinks</option>
+    <option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
+  </select>
+
+  <select id="location">
+    <option value="">Location</option>
+    <option>UP</option><option>DOWN</option><option>PrayagRaj</option>
+    <option>Ayodhya</option><option>Varanasi</option>
+    <option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
+  </select>
+
+  <input type="text" id="desc" placeholder="Short Description">
+  <input type="number" id="amount" placeholder="Amount">
+  <input type="file" id="invoice">
+
+  <button onclick="submitExpense()">Save</button>
+</div>
+
+<div class="card">
+  <h3>Expense List</h3>
+  <table id="list"></table>
+</div>
+
+<div class="card">
+  <h3>This Month Summary</h3>
+  <div id="dashboard"></div>
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
+
+function submitExpense() {
+  const data = {
+    action: document.getElementById("expenseId").value ? "EDIT" : "ADD",
+    expenseId: document.getElementById("expenseId").value,
+    date: date.value,
+    enteredBy: enteredBy.value,
+    category: category.value,
+    location: location.value,
+    description: desc.value,
+    amount: amount.value
+  };
+
+  const file = invoice.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = () => { data.invoiceBase64 = reader.result; send(data); };
+    reader.readAsDataURL(file);
+  } else send(data);
+}
+
+function send(data) {
+  fetch(API, { method:"POST", body:JSON.stringify(data) })
+    .then(r=>r.json())
+    .then(()=>{ resetForm(); loadList(); loadDashboard(); });
+}
+
+function loadList() {
+  fetch(API,{method:"POST",body:JSON.stringify({action:"LIST"})})
+    .then(r=>r.json())
+    .then(d=>{
+      let html="<tr><th>Date</th><th>Cat</th><th>Loc</th><th>Amt</th><th></th></tr>";
+      d.forEach(r=>{
+        html+=`<tr>
+          <td>${r[1]}</td><td>${r[3]}</td><td>${r[4]}</td><td>₹${r[6]}</td>
+          <td>${r[10]==0?`<button onclick='edit("${r[0]}",${JSON.stringify(r)})'>Edit</button>`:"<span class='locked'>Locked</span>"}</td>
+        </tr>`;
+      });
+      list.innerHTML=html;
+    });
+}
+
+function edit(id,row){
+  expenseId.value=id;
+  date.value=row[1];
+  enteredBy.value=row[2];
+  category.value=row[3];
+  location.value=row[4];
+  desc.value=row[5];
+  amount.value=row[6];
+}
+
+function loadDashboard(){
+  fetch(API,{method:"POST",body:JSON.stringify({action:"DASHBOARD"})})
+    .then(r=>r.json())
+    .then(d=>{
+      let h=`<b>Total:</b> ₹${d.total}<br><br>`;
+      for(let k in d.category) h+=`${k}: ₹${d.category[k]}<br>`;
+      dashboard.innerHTML=h;
+    });
+}
+
+function resetForm(){
+  document.querySelectorAll("input,select").forEach(e=>e.value="");
+  expenseId.value="";
+}
+
+loadList(); loadDashboard();
+</script>
+
+</body>
+</html>
