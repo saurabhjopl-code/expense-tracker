@@ -4,36 +4,167 @@
 <meta charset="UTF-8">
 <title>Expense Tracker</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: #f5f7fb;
+  color: #1f2937;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.card h2 {
+  margin: 0 0 15px;
+  font-size: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+input, select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+button {
+  padding: 12px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1e40af;
+}
+
+button.secondary {
+  background: #16a34a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+th {
+  text-align: left;
+  background: #f9fafb;
+}
+
+.locked {
+  color: #ef4444;
+  font-size: 12px;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #16a34a;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: none;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Expense Tracker</h2>
+<div class="container">
+  <h1>💸 Expense Tracker</h1>
 
-<input id="date" type="date">
-<input id="enteredBy" placeholder="Entered By">
+  <!-- ADD / EDIT -->
+  <div class="card">
+    <h2>Add / Edit Expense</h2>
+    <input type="hidden" id="expenseId">
 
-<select id="category">
-<option>Food</option><option>Fast Food</option><option>Drinks</option>
-<option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
-</select>
+    <div class="grid">
+      <input type="date" id="date">
+      <input id="enteredBy" placeholder="Entered By">
 
-<select id="location">
-<option>UP</option><option>DOWN</option><option>PrayagRaj</option>
-<option>Ayodhya</option><option>Varanasi</option>
-<option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
-</select>
+      <select id="category">
+        <option value="">Category</option>
+        <option>Food</option><option>Fast Food</option><option>Drinks</option>
+        <option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
+      </select>
 
-<input id="desc" placeholder="Description">
-<input id="amount" type="number">
-<input id="invoice" type="file">
-<input type="hidden" id="expenseId">
+      <select id="location">
+        <option value="">Location</option>
+        <option>UP</option><option>DOWN</option><option>PrayagRaj</option>
+        <option>Ayodhya</option><option>Varanasi</option>
+        <option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
+      </select>
 
-<button onclick="submitExpense()">Save</button>
+      <input id="desc" placeholder="Short Description">
+      <input id="amount" type="number" placeholder="Amount">
+      <input id="invoice" type="file">
+    </div>
+
+    <br>
+    <button onclick="submitExpense()">Save Expense</button>
+  </div>
+
+  <!-- LIST -->
+  <div class="card">
+    <h2>Expense List</h2>
+    <table id="list"></table>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="card">
+    <h2>This Month Summary</h2>
+    <div id="dashboard"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
 
-function submitExpense() {
+function toast(msg, success=true){
+  const t = document.getElementById("toast");
+  t.style.background = success ? "#16a34a" : "#ef4444";
+  t.innerText = msg;
+  t.style.display = "block";
+  setTimeout(()=>t.style.display="none", 2500);
+}
+
+function submitExpense(){
   const data = {
     action: expenseId.value ? "EDIT" : "ADD",
     expenseId: expenseId.value,
@@ -46,19 +177,73 @@ function submitExpense() {
   };
 
   const file = invoice.files[0];
-  if (file) {
+  if(file){
     const r = new FileReader();
-    r.onload = () => { data.invoiceBase64 = r.result; send(data); };
+    r.onload = ()=>{ data.invoiceBase64 = r.result; send(data); };
     r.readAsDataURL(file);
   } else send(data);
 }
 
-function send(data) {
-  fetch(API, { method: "POST", body: JSON.stringify(data) })
-    .then(r => r.text())
-    .then(t => alert(t))
-    .catch(e => alert(e));
+function send(data){
+  fetch(API,{method:"POST",body:JSON.stringify(data)})
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.status==="SUCCESS"||res.status==="UPDATED"){
+        toast("Saved successfully");
+        resetForm();
+        loadList();
+        loadDashboard();
+      } else toast(res.message,false);
+    });
 }
+
+function loadList(){
+  fetch(API,{method:"POST",body:JSON.stringify({action:"LIST"})})
+    .then(r=>r.json())
+    .then(d=>{
+      let h="<tr><th>Date</th><th>Category</th><th>Location</th><th>Amount</th><th>Status</th></tr>";
+      d.forEach(r=>{
+        h+=`<tr>
+          <td>${r[1]}</td>
+          <td>${r[3]}</td>
+          <td>${r[4]}</td>
+          <td>₹${r[6]}</td>
+          <td>${r[10]==0?`<button onclick='edit("${r[0]}",${JSON.stringify(r)})'>Edit</button>`:"<span class='locked'>Locked</span>"}</td>
+        </tr>`;
+      });
+      list.innerHTML=h;
+    });
+}
+
+function edit(id,row){
+  expenseId.value=id;
+  date.value=row[1];
+  enteredBy.value=row[2];
+  category.value=row[3];
+  location.value=row[4];
+  desc.value=row[5];
+  amount.value=row[6];
+}
+
+function loadDashboard(){
+  fetch(API,{method:"POST",body:JSON.stringify({action:"DASHBOARD"})})
+    .then(r=>r.json())
+    .then(d=>{
+      let h=`<b>Total Spend:</b> ₹${d.total}<br><br>`;
+      for(let k in d.category){
+        h+=`${k}: ₹${d.category[k]}<br>`;
+      }
+      dashboard.innerHTML=h;
+    });
+}
+
+function resetForm(){
+  document.querySelectorAll("input,select").forEach(e=>e.value="");
+  expenseId.value="";
+}
+
+loadList();
+loadDashboard();
 </script>
 
 </body>
