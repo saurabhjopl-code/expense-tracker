@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root {
+:root{
   --primary:#2563eb;
-  --success:#16a34a;
+  --accent:#16a34a;
   --danger:#ef4444;
   --bg:#f5f7fb;
   --card:#ffffff;
@@ -16,31 +16,31 @@
   --muted:#6b7280;
 }
 
-body {
+body{
   margin:0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
   background:var(--bg);
   color:var(--text);
 }
 
-.container {
-  max-width: 600px;
+.container{
+  max-width:600px;
   margin:auto;
   padding:16px;
 }
 
-h1 {
+h1{
   font-size:22px;
   margin-bottom:12px;
 }
 
-.section-title {
-  font-size:16px;
+.section-title{
+  font-size:15px;
   font-weight:600;
-  margin:16px 0 8px;
+  margin:14px 0 8px;
 }
 
-.card {
+.card{
   background:var(--card);
   border-radius:14px;
   padding:14px;
@@ -48,7 +48,7 @@ h1 {
   margin-bottom:14px;
 }
 
-input, select {
+input,select{
   width:100%;
   padding:14px;
   margin-bottom:10px;
@@ -57,7 +57,7 @@ input, select {
   font-size:15px;
 }
 
-button {
+button{
   width:100%;
   padding:14px;
   border-radius:12px;
@@ -67,12 +67,13 @@ button {
   color:#fff;
 }
 
-button.small {
-  padding:8px 12px;
+button.small{
+  width:auto;
+  padding:6px 12px;
   font-size:13px;
 }
 
-.recent-item {
+.recent-item{
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -80,28 +81,43 @@ button.small {
   border-bottom:1px solid #e5e7eb;
 }
 
-.recent-item:last-child { border-bottom:none; }
+.recent-item:last-child{border-bottom:none;}
 
-.amount {
-  font-weight:600;
-}
+.amount{font-weight:600;}
+.locked{color:var(--danger);font-size:12px;}
 
-.locked {
-  color:var(--danger);
-  font-size:12px;
-}
-
-.toast {
+.toast{
   position:fixed;
   bottom:16px;
   left:50%;
   transform:translateX(-50%);
-  background:var(--success);
+  background:var(--accent);
   color:#fff;
   padding:12px 18px;
   border-radius:999px;
   display:none;
 }
+
+/* BAR CHARTS */
+.bar-group{margin-bottom:12px;}
+.bar-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  margin-bottom:4px;
+}
+.bar-track{
+  background:#e5e7eb;
+  border-radius:8px;
+  height:10px;
+  overflow:hidden;
+}
+.bar-fill{
+  height:100%;
+  border-radius:8px;
+}
+.bar-fill.category{background:var(--primary);}
+.bar-fill.location{background:var(--accent);}
 </style>
 </head>
 
@@ -110,7 +126,7 @@ button.small {
 <div class="container">
   <h1>💸 Expense Tracker</h1>
 
-  <!-- ADD -->
+  <!-- ADD / EDIT -->
   <div class="card">
     <div class="section-title">Add / Edit Expense</div>
     <input type="hidden" id="expenseId">
@@ -154,35 +170,35 @@ button.small {
 <div class="toast" id="toast"></div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
+const API="https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
 
-/* Default date = today */
-document.getElementById("date").valueAsDate = new Date();
+/* default date = today */
+date.valueAsDate=new Date();
 
-function toast(msg, ok=true){
+function toast(msg,ok=true){
   const t=document.getElementById("toast");
-  t.style.background = ok ? "var(--success)" : "var(--danger)";
-  t.innerText = msg;
+  t.style.background=ok?"var(--accent)":"var(--danger)";
+  t.innerText=msg;
   t.style.display="block";
   setTimeout(()=>t.style.display="none",2200);
 }
 
 function submitExpense(){
   const data={
-    action: expenseId.value ? "EDIT":"ADD",
-    expenseId: expenseId.value,
-    date: date.value,
-    enteredBy: enteredBy.value,
-    category: category.value,
-    location: location.value,
-    description: desc.value,
-    amount: amount.value
+    action:expenseId.value?"EDIT":"ADD",
+    expenseId:expenseId.value,
+    date:date.value,
+    enteredBy:enteredBy.value,
+    category:category.value,
+    location:location.value,
+    description:desc.value,
+    amount:amount.value
   };
 
   const f=invoice.files[0];
   if(f){
     const r=new FileReader();
-    r.onload=()=>{data.invoiceBase64=r.result; send(data);}
+    r.onload=()=>{data.invoiceBase64=r.result;send(data);}
     r.readAsDataURL(f);
   } else send(data);
 }
@@ -238,11 +254,35 @@ function loadDashboard(){
     .then(r=>r.json())
     .then(d=>{
       let h=`<b>Total:</b> ₹${d.total}<br><br>`;
-      for(let k in d.category){
-        h+=`${k}: ₹${d.category[k]}<br>`;
-      }
+
+      h+=`<div class="section-title">Category-wise</div>`;
+      h+=renderBars(d.category,"category");
+
+      h+=`<div class="section-title">Location-wise</div>`;
+      h+=renderBars(d.location,"location");
+
       dashboard.innerHTML=h;
     });
+}
+
+function renderBars(data,type){
+  const vals=Object.values(data);
+  const max=Math.max(...vals,1);
+  let h="";
+  for(let k in data){
+    const w=(data[k]/max)*100;
+    h+=`
+      <div class="bar-group">
+        <div class="bar-label">
+          <span>${k}</span>
+          <span>₹${data[k]}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill ${type}" style="width:${w}%"></div>
+        </div>
+      </div>`;
+  }
+  return h;
 }
 
 function resetForm(){
