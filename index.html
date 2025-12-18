@@ -6,98 +6,101 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
+:root {
+  --primary:#2563eb;
+  --success:#16a34a;
+  --danger:#ef4444;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+}
+
 body {
-  margin: 0;
-  font-family: Inter, Arial, sans-serif;
-  background: #f5f7fb;
-  color: #1f2937;
+  margin:0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background:var(--bg);
+  color:var(--text);
 }
 
 .container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
+  max-width: 600px;
+  margin:auto;
+  padding:16px;
 }
 
 h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size:22px;
+  margin-bottom:12px;
+}
+
+.section-title {
+  font-size:16px;
+  font-weight:600;
+  margin:16px 0 8px;
 }
 
 .card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-}
-
-.card h2 {
-  margin: 0 0 15px;
-  font-size: 18px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  background:var(--card);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.06);
+  margin-bottom:14px;
 }
 
 input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
+  width:100%;
+  padding:14px;
+  margin-bottom:10px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:15px;
 }
 
 button {
-  padding: 12px;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  font-size:15px;
+  background:var(--primary);
+  color:#fff;
 }
 
-button:hover {
-  background: #1e40af;
+button.small {
+  padding:8px 12px;
+  font-size:13px;
 }
 
-button.secondary {
-  background: #16a34a;
+.recent-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid #e5e7eb;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+.recent-item:last-child { border-bottom:none; }
 
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 14px;
-}
-
-th {
-  text-align: left;
-  background: #f9fafb;
+.amount {
+  font-weight:600;
 }
 
 .locked {
-  color: #ef4444;
-  font-size: 12px;
+  color:var(--danger);
+  font-size:12px;
 }
 
 .toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #16a34a;
-  color: #fff;
-  padding: 12px 16px;
-  border-radius: 8px;
-  display: none;
+  position:fixed;
+  bottom:16px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--success);
+  color:#fff;
+  padding:12px 18px;
+  border-radius:999px;
+  display:none;
 }
 </style>
 </head>
@@ -107,46 +110,43 @@ th {
 <div class="container">
   <h1>💸 Expense Tracker</h1>
 
-  <!-- ADD / EDIT -->
+  <!-- ADD -->
   <div class="card">
-    <h2>Add / Edit Expense</h2>
+    <div class="section-title">Add / Edit Expense</div>
     <input type="hidden" id="expenseId">
 
-    <div class="grid">
-      <input type="date" id="date">
-      <input id="enteredBy" placeholder="Entered By">
+    <input type="date" id="date">
+    <input id="enteredBy" placeholder="Entered By">
 
-      <select id="category">
-        <option value="">Category</option>
-        <option>Food</option><option>Fast Food</option><option>Drinks</option>
-        <option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
-      </select>
+    <select id="category">
+      <option value="">Category</option>
+      <option>Food</option><option>Fast Food</option><option>Drinks</option>
+      <option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
+    </select>
 
-      <select id="location">
-        <option value="">Location</option>
-        <option>UP</option><option>DOWN</option><option>PrayagRaj</option>
-        <option>Ayodhya</option><option>Varanasi</option>
-        <option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
-      </select>
+    <select id="location">
+      <option value="">Location</option>
+      <option>UP</option><option>DOWN</option><option>PrayagRaj</option>
+      <option>Ayodhya</option><option>Varanasi</option>
+      <option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
+    </select>
 
-      <input id="desc" placeholder="Short Description">
-      <input id="amount" type="number" placeholder="Amount">
-      <input id="invoice" type="file">
-    </div>
+    <input id="desc" placeholder="Short Description">
+    <input id="amount" type="number" placeholder="Amount">
+    <input id="invoice" type="file">
 
-    <br>
     <button onclick="submitExpense()">Save Expense</button>
   </div>
 
-  <!-- LIST -->
+  <!-- LAST 10 -->
   <div class="card">
-    <h2>Expense List</h2>
-    <table id="list"></table>
+    <div class="section-title">Recent Expenses (Last 10)</div>
+    <div id="recent"></div>
   </div>
 
   <!-- DASHBOARD -->
   <div class="card">
-    <h2>This Month Summary</h2>
+    <div class="section-title">This Month Summary</div>
     <div id="dashboard"></div>
   </div>
 </div>
@@ -156,17 +156,20 @@ th {
 <script>
 const API = "https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
 
-function toast(msg, success=true){
-  const t = document.getElementById("toast");
-  t.style.background = success ? "#16a34a" : "#ef4444";
+/* Default date = today */
+document.getElementById("date").valueAsDate = new Date();
+
+function toast(msg, ok=true){
+  const t=document.getElementById("toast");
+  t.style.background = ok ? "var(--success)" : "var(--danger)";
   t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(()=>t.style.display="none", 2500);
+  t.style.display="block";
+  setTimeout(()=>t.style.display="none",2200);
 }
 
 function submitExpense(){
-  const data = {
-    action: expenseId.value ? "EDIT" : "ADD",
+  const data={
+    action: expenseId.value ? "EDIT":"ADD",
     expenseId: expenseId.value,
     date: date.value,
     enteredBy: enteredBy.value,
@@ -176,11 +179,11 @@ function submitExpense(){
     amount: amount.value
   };
 
-  const file = invoice.files[0];
-  if(file){
-    const r = new FileReader();
-    r.onload = ()=>{ data.invoiceBase64 = r.result; send(data); };
-    r.readAsDataURL(file);
+  const f=invoice.files[0];
+  if(f){
+    const r=new FileReader();
+    r.onload=()=>{data.invoiceBase64=r.result; send(data);}
+    r.readAsDataURL(f);
   } else send(data);
 }
 
@@ -189,29 +192,33 @@ function send(data){
     .then(r=>r.json())
     .then(res=>{
       if(res.status==="SUCCESS"||res.status==="UPDATED"){
-        toast("Saved successfully");
+        toast("Saved");
         resetForm();
-        loadList();
+        loadRecent();
         loadDashboard();
       } else toast(res.message,false);
     });
 }
 
-function loadList(){
+function loadRecent(){
   fetch(API,{method:"POST",body:JSON.stringify({action:"LIST"})})
     .then(r=>r.json())
     .then(d=>{
-      let h="<tr><th>Date</th><th>Category</th><th>Location</th><th>Amount</th><th>Status</th></tr>";
-      d.forEach(r=>{
-        h+=`<tr>
-          <td>${r[1]}</td>
-          <td>${r[3]}</td>
-          <td>${r[4]}</td>
-          <td>₹${r[6]}</td>
-          <td>${r[10]==0?`<button onclick='edit("${r[0]}",${JSON.stringify(r)})'>Edit</button>`:"<span class='locked'>Locked</span>"}</td>
-        </tr>`;
+      const last=d.slice(-10).reverse();
+      let h="";
+      last.forEach(r=>{
+        h+=`<div class="recent-item">
+          <div>
+            <div>${r[3]} • ${r[4]}</div>
+            <small>${r[1]}</small>
+          </div>
+          <div>
+            <span class="amount">₹${r[6]}</span><br>
+            ${r[10]==0?`<button class="small" onclick='edit("${r[0]}",${JSON.stringify(r)})'>Edit</button>`:`<span class="locked">Locked</span>`}
+          </div>
+        </div>`;
       });
-      list.innerHTML=h;
+      recent.innerHTML=h;
     });
 }
 
@@ -223,13 +230,14 @@ function edit(id,row){
   location.value=row[4];
   desc.value=row[5];
   amount.value=row[6];
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
 function loadDashboard(){
   fetch(API,{method:"POST",body:JSON.stringify({action:"DASHBOARD"})})
     .then(r=>r.json())
     .then(d=>{
-      let h=`<b>Total Spend:</b> ₹${d.total}<br><br>`;
+      let h=`<b>Total:</b> ₹${d.total}<br><br>`;
       for(let k in d.category){
         h+=`${k}: ₹${d.category[k]}<br>`;
       }
@@ -239,10 +247,11 @@ function loadDashboard(){
 
 function resetForm(){
   document.querySelectorAll("input,select").forEach(e=>e.value="");
+  date.valueAsDate=new Date();
   expenseId.value="";
 }
 
-loadList();
+loadRecent();
 loadDashboard();
 </script>
 
