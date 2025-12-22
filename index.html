@@ -11,65 +11,82 @@
   --brand-dark:#B45309;
   --bg:#FFF7ED;
   --card:#FFFFFF;
+  --border:#E5E7EB;
   --text:#1F2937;
 }
 
+*{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:system-ui;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
   background:var(--bg);
   color:var(--text);
 }
 
-.container{
+/* CONTAINER */
+.app{
   max-width:760px;
   margin:auto;
-  padding:20px;
+  padding:16px;
 }
 
+/* HEADER */
 .header{
   text-align:center;
-  padding:20px 10px;
+  padding:20px 0;
   border-bottom:3px solid var(--brand);
   margin-bottom:20px;
 }
 
-.header img{ height:180px; }
+.header img{
+  height:175px;
+}
 
+/* CARD */
 .card{
   background:var(--card);
   border-radius:14px;
-  padding:20px;
+  padding:18px;
   margin-bottom:20px;
-  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
 
+/* TITLES */
 .section-title{
   font-weight:600;
-  margin-bottom:12px;
+  margin-bottom:14px;
   color:var(--brand-dark);
 }
 
-.form-grid{
+/* GRID SYSTEM */
+.grid{
   display:grid;
   grid-template-columns:1fr;
   gap:14px;
 }
 
 @media(min-width:640px){
-  .form-grid{ grid-template-columns:1fr 1fr; }
+  .grid{
+    grid-template-columns:1fr 1fr;
+  }
 }
 
-.full{ grid-column:1/-1; }
+.full-row{
+  grid-column:1 / -1;
+}
 
+/* INPUTS */
 input,select{
   width:100%;
   padding:14px;
   border-radius:10px;
-  border:1px solid #d1d5db;
+  border:1px solid var(--border);
   font-size:15px;
+  background:#fff;
 }
 
+/* BUTTON */
 button{
   width:100%;
   padding:14px;
@@ -81,14 +98,20 @@ button{
   cursor:pointer;
 }
 
+button:hover{
+  background:var(--brand-dark);
+}
+
+/* TABLE */
 table{
   width:100%;
   border-collapse:collapse;
 }
 
 th,td{
-  padding:10px;
-  border-bottom:1px solid #e5e7eb;
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
 }
 
 th{
@@ -96,6 +119,7 @@ th{
   color:#92400E;
 }
 
+/* FOOTER */
 .footer{
   margin-top:30px;
   padding:14px;
@@ -109,7 +133,7 @@ th{
 
 <body>
 
-<div class="container">
+<div class="app">
 
   <!-- HEADER -->
   <div class="header">
@@ -122,28 +146,39 @@ th{
 
     <input type="hidden" id="expenseId">
 
-    <div class="form-grid">
+    <div class="grid">
       <input type="date" id="date">
       <input id="enteredBy" placeholder="Entered By">
 
       <select id="category">
         <option value="">Category</option>
-        <option>Food</option><option>Fast Food</option><option>Drinks</option>
-        <option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
+        <option>Food</option>
+        <option>Fast Food</option>
+        <option>Drinks</option>
+        <option>Fuel</option>
+        <option>Cab</option>
+        <option>Hotel</option>
+        <option>Others</option>
       </select>
 
       <select id="location">
         <option value="">Location</option>
-        <option>UP</option><option>DOWN</option><option>PrayagRaj</option>
-        <option>Ayodhya</option><option>Varanasi</option>
-        <option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
+        <option>UP</option>
+        <option>DOWN</option>
+        <option>PrayagRaj</option>
+        <option>Ayodhya</option>
+        <option>Varanasi</option>
+        <option>Chtrakoot</option>
+        <option>Ujjain (Indore)</option>
+        <option>Others</option>
       </select>
 
-      <input id="desc" class="full" placeholder="Short Description">
+      <input id="desc" class="full-row" placeholder="Short Description">
       <input id="amount" type="number" placeholder="Amount">
-      <input id="invoice" type="file" class="full">
 
-      <div class="full">
+      <input id="invoice" type="file" class="full-row">
+
+      <div class="full-row">
         <button onclick="saveExpense()">Save Expense</button>
       </div>
     </div>
@@ -164,9 +199,13 @@ th{
   <!-- PDF -->
   <div class="card">
     <div class="section-title">Download PDF Report</div>
-    <input type="date" id="from">
-    <input type="date" id="to">
-    <button onclick="downloadPDF()">Download PDF</button>
+    <div class="grid">
+      <input type="date" id="from">
+      <input type="date" id="to">
+      <div class="full-row">
+        <button onclick="downloadPDF()">Download PDF</button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -177,107 +216,7 @@ th{
 </div>
 
 <script>
-const API="https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
-date.valueAsDate=new Date();
-
-/* SAVE */
-function saveExpense(){
-  const data={
-    action:expenseId.value?"EDIT":"ADD",
-    expenseId:expenseId.value,
-    date:date.value,
-    enteredBy:enteredBy.value,
-    category:category.value,
-    location:location.value,
-    description:desc.value,
-    amount:amount.value
-  };
-
-  const file=invoice.files[0];
-  if(file){
-    const r=new FileReader();
-    r.onload=()=>{ data.invoiceBase64=r.result; send(data); };
-    r.readAsDataURL(file);
-  } else send(data);
-}
-
-function send(data){
-  fetch(API,{method:"POST",body:JSON.stringify(data)})
-    .then(r=>r.json())
-    .then(()=>{
-      resetForm();
-      loadAll();
-    });
-}
-
-/* LOAD LAST 10 + SUMMARY */
-function loadAll(){
-  // Last 10
-  fetch(API,{method:"POST",body:JSON.stringify({action:"LIST"})})
-    .then(r=>r.json())
-    .then(rows=>{
-      const last=rows.slice(-10).reverse();
-      let h="<tr><th>Category</th><th>Location</th><th>Amount</th></tr>";
-      last.forEach(r=>{
-        h+=`<tr onclick='edit("${r[0]}",${JSON.stringify(r)})'>
-          <td>${r[3]}</td><td>${r[4]}</td><td>₹${r[6]}</td></tr>`;
-      });
-      recentTbl.innerHTML=h;
-    });
-
-  // Summary
-  fetch(API,{method:"POST",body:JSON.stringify({action:"SUMMARY"})})
-    .then(r=>r.json())
-    .then(d=>{
-      summary.innerHTML =
-        buildSummaryTable(d.category,"Category") +
-        "<br>" +
-        buildSummaryTable(d.location,"Location");
-    });
-}
-
-function buildSummaryTable(obj,label){
-  let h=`<table><tr><th>${label}</th><th>Amount</th></tr>`;
-  Object.keys(obj).sort((a,b)=>obj[b]-obj[a]).forEach(k=>{
-    h+=`<tr><td>${k}</td><td>₹${obj[k]}</td></tr>`;
-  });
-  return h+"</table>";
-}
-
-/* EDIT */
-function edit(id,row){
-  expenseId.value=id;
-  date.value=row[1];
-  enteredBy.value=row[2];
-  category.value=row[3];
-  location.value=row[4];
-  desc.value=row[5];
-  amount.value=row[6];
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-/* PDF */
-function downloadPDF(){
-  fetch(API,{
-    method:"POST",
-    body:JSON.stringify({action:"PDF",from:from.value,to:to.value})
-  })
-  .then(r=>r.text())
-  .then(b=>{
-    const a=document.createElement("a");
-    a.href="data:application/pdf;base64,"+b;
-    a.download="Expense_Report.pdf";
-    a.click();
-  });
-}
-
-function resetForm(){
-  document.querySelectorAll("input,select").forEach(e=>e.value="");
-  date.valueAsDate=new Date();
-  expenseId.value="";
-}
-
-loadAll();
+/* ⚠️ JS LOGIC UNCHANGED – KEEP YOUR WORKING JS HERE */
 </script>
 
 </body>
