@@ -8,41 +8,50 @@
 <style>
 body{font-family:system-ui;background:#f5f7fb;margin:0}
 .container{max-width:600px;margin:auto;padding:16px}
-.card{background:#fff;padding:14px;border-radius:14px;margin-bottom:14px}
-input,select,button{width:100%;padding:14px;margin-bottom:10px;border-radius:10px}
+.card{background:#fff;padding:14px;border-radius:12px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+th{background:#f1f5f9}
+input,select,button{width:100%;padding:12px;margin-bottom:10px}
 button{background:#2563eb;color:#fff;border:none}
-.small{width:auto;padding:6px 10px}
-.bar{background:#e5e7eb;border-radius:6px;height:10px}
-.fill{height:100%;border-radius:6px}
-.cat{background:#2563eb}
-.loc{background:#16a34a}
+.small{padding:4px 8px;font-size:12px;width:auto}
 </style>
 </head>
 
 <body>
 <div class="container">
+
 <h2>💸 Expense Tracker</h2>
 
 <div class="card">
 <input type="hidden" id="expenseId">
 <input type="date" id="date">
 <input id="enteredBy" placeholder="Entered By">
-<select id="category"><option>Food</option><option>Fuel</option><option>Hotel</option></select>
-<select id="location"><option>UP</option><option>Varanasi</option><option>Others</option></select>
+<select id="category">
+<option value="">Category</option>
+<option>Food</option><option>Fast Food</option><option>Drinks</option>
+<option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
+</select>
+<select id="location">
+<option value="">Location</option>
+<option>UP</option><option>DOWN</option><option>PrayagRaj</option>
+<option>Ayodhya</option><option>Varanasi</option>
+<option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
+</select>
 <input id="desc" placeholder="Description">
 <input id="amount" type="number">
 <input id="invoice" type="file">
-<button onclick="save()">Save</button>
+<button onclick="save()">Save Expense</button>
 </div>
 
 <div class="card">
 <b>Last 10 Expenses</b>
-<div id="recent"></div>
+<table id="recentTbl"></table>
 </div>
 
 <div class="card">
-<b>This Month Summary</b>
-<div id="dashboard"></div>
+<b>Summary (This Month)</b>
+<div id="summary"></div>
 </div>
 
 <div class="card">
@@ -51,6 +60,7 @@ button{background:#2563eb;color:#fff;border:none}
 <input type="date" id="to">
 <button onclick="downloadPDF()">Download PDF</button>
 </div>
+
 </div>
 
 <script>
@@ -58,44 +68,58 @@ const API="https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rF
 date.valueAsDate=new Date();
 
 function save(){
-  const d={action:expenseId.value?"EDIT":"ADD",
+  const d={
+    action:expenseId.value?"EDIT":"ADD",
     expenseId:expenseId.value,
     date:date.value,enteredBy:enteredBy.value,
     category:category.value,location:location.value,
-    description:desc.value,amount:amount.value};
+    description:desc.value,amount:amount.value
+  };
   const f=invoice.files[0];
-  if(f){const r=new FileReader();r.onload=()=>{d.invoiceBase64=r.result;send(d)};r.readAsDataURL(f)}
-  else send(d);
+  if(f){
+    const r=new FileReader();
+    r.onload=()=>{d.invoiceBase64=r.result;send(d)};
+    r.readAsDataURL(f);
+  } else send(d);
 }
 
 function send(d){
-  fetch(API,{method:"POST",body:JSON.stringify(d)}).then(()=>{load();});
+  fetch(API,{method:"POST",body:JSON.stringify(d)})
+  .then(()=>{load();expenseId.value="";});
 }
 
 function load(){
   fetch(API,{method:"POST",body:JSON.stringify({action:"LIST"})})
   .then(r=>r.json()).then(d=>{
-    recent.innerHTML=d.slice(-10).reverse().map(r=>`
-      <div>${r[3]} • ${r[4]} ₹${r[6]}
-      ${r[10]==0?`<button class="small" onclick='edit("${r[0]}",${JSON.stringify(r)})'>Edit</button>`:""}</div>`).join("");
+    let rows=d.slice(-10).reverse();
+    let h="<tr><th>Category</th><th>Location</th><th>Amount</th></tr>";
+    rows.forEach(r=>{
+      h+=`<tr onclick='edit("${r[0]}",${JSON.stringify(r)})'>
+        <td>${r[3]}</td><td>${r[4]}</td><td>₹${r[6]}</td></tr>`;
+    });
+    recentTbl.innerHTML=h;
   });
 
-  fetch(API,{method:"POST",body:JSON.stringify({action:"DASHBOARD"})})
+  fetch(API,{method:"POST",body:JSON.stringify({action:"SUMMARY"})})
   .then(r=>r.json()).then(d=>{
-    dashboard.innerHTML=bars(d.category,"cat")+bars(d.location,"loc");
+    summary.innerHTML =
+      buildTable(d.category,"Category") +
+      "<br>" +
+      buildTable(d.location,"Location");
   });
 }
 
-function bars(obj,cls){
-  let m=Math.max(...Object.values(obj),1),h="";
-  for(let k in obj){
-    h+=`${k} ₹${obj[k]}<div class="bar"><div class="fill ${cls}" style="width:${(obj[k]/m)*100}%"></div></div>`;
-  }
-  return h;
+function buildTable(obj,label){
+  let h=`<table><tr><th>${label}</th><th>Amount</th></tr>`;
+  Object.keys(obj).sort((a,b)=>obj[b]-obj[a]).forEach(k=>{
+    h+=`<tr><td>${k}</td><td>₹${obj[k]}</td></tr>`;
+  });
+  return h+"</table>";
 }
 
 function edit(id,r){
-  expenseId.value=id;date.value=r[1];enteredBy.value=r[2];
+  expenseId.value=id;
+  date.value=r[1];enteredBy.value=r[2];
   category.value=r[3];location.value=r[4];
   desc.value=r[5];amount.value=r[6];
 }
@@ -106,7 +130,8 @@ function downloadPDF(){
   })}).then(r=>r.text()).then(b=>{
     const a=document.createElement("a");
     a.href="data:application/pdf;base64,"+b;
-    a.download="Expense_Report.pdf";a.click();
+    a.download="Expense_Report.pdf";
+    a.click();
   });
 }
 
