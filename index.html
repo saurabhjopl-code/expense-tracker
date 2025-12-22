@@ -12,14 +12,11 @@
   --bg:#FFF7ED;
   --card:#FFFFFF;
   --text:#1F2937;
-  --muted:#6B7280;
 }
-
-*{box-sizing:border-box}
 
 body{
   margin:0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont;
+  font-family:system-ui;
   background:var(--bg);
   color:var(--text);
 }
@@ -30,19 +27,15 @@ body{
   padding:20px;
 }
 
-/* HEADER */
 .header{
   text-align:center;
-  padding:20px 10px 16px;
+  padding:20px 10px;
   border-bottom:3px solid var(--brand);
   margin-bottom:20px;
 }
 
-.header img{
-  height:152px;
-}
+.header img{ height:180px; }
 
-/* CARDS */
 .card{
   background:var(--card);
   border-radius:14px;
@@ -57,7 +50,6 @@ body{
   color:var(--brand-dark);
 }
 
-/* FORM */
 .form-grid{
   display:grid;
   grid-template-columns:1fr;
@@ -65,18 +57,16 @@ body{
 }
 
 @media(min-width:640px){
-  .form-grid{
-    grid-template-columns:1fr 1fr;
-  }
+  .form-grid{ grid-template-columns:1fr 1fr; }
 }
 
-.full{grid-column:1/-1}
+.full{ grid-column:1/-1; }
 
 input,select{
   width:100%;
   padding:14px;
   border-radius:10px;
-  border:1px solid #D1D5DB;
+  border:1px solid #d1d5db;
   font-size:15px;
 }
 
@@ -91,11 +81,6 @@ button{
   cursor:pointer;
 }
 
-button:hover{
-  background:var(--brand-dark);
-}
-
-/* TABLES */
 table{
   width:100%;
   border-collapse:collapse;
@@ -103,8 +88,7 @@ table{
 
 th,td{
   padding:10px;
-  border-bottom:1px solid #E5E7EB;
-  text-align:left;
+  border-bottom:1px solid #e5e7eb;
 }
 
 th{
@@ -112,7 +96,6 @@ th{
   color:#92400E;
 }
 
-/* FOOTER */
 .footer{
   margin-top:30px;
   padding:14px;
@@ -120,11 +103,6 @@ th{
   background:var(--brand-dark);
   color:#fff;
   font-size:13px;
-}
-
-.footer small{
-  display:block;
-  opacity:.85;
 }
 </style>
 </head>
@@ -150,25 +128,15 @@ th{
 
       <select id="category">
         <option value="">Category</option>
-        <option>Food</option>
-        <option>Fast Food</option>
-        <option>Drinks</option>
-        <option>Fuel</option>
-        <option>Cab</option>
-        <option>Hotel</option>
-        <option>Others</option>
+        <option>Food</option><option>Fast Food</option><option>Drinks</option>
+        <option>Fuel</option><option>Cab</option><option>Hotel</option><option>Others</option>
       </select>
 
       <select id="location">
         <option value="">Location</option>
-        <option>UP</option>
-        <option>DOWN</option>
-        <option>PrayagRaj</option>
-        <option>Ayodhya</option>
-        <option>Varanasi</option>
-        <option>Chtrakoot</option>
-        <option>Ujjain (Indore)</option>
-        <option>Others</option>
+        <option>UP</option><option>DOWN</option><option>PrayagRaj</option>
+        <option>Ayodhya</option><option>Varanasi</option>
+        <option>Chtrakoot</option><option>Ujjain (Indore)</option><option>Others</option>
       </select>
 
       <input id="desc" class="full" placeholder="Short Description">
@@ -176,7 +144,7 @@ th{
       <input id="invoice" type="file" class="full">
 
       <div class="full">
-        <button onclick="save()">Save Expense</button>
+        <button onclick="saveExpense()">Save Expense</button>
       </div>
     </div>
   </div>
@@ -203,17 +171,113 @@ th{
 
 </div>
 
-<!-- FOOTER -->
 <div class="footer">
-  <strong>FOR INTERNAL USE ONLY</strong>
-  <small>© Saurabh Mondal. All rights reserved.</small>
+  <strong>FOR INTERNAL USE ONLY</strong><br>
+  © Saurabh Mondal. All rights reserved.
 </div>
 
 <script>
 const API="https://script.google.com/macros/s/AKfycbxTEUuXm_thvDv9BbKbfRWjPRt7rFxIPiVlGXC7_FqjD24DFvOh0fNsTeIPPXoutqpqcQ/exec";
 date.valueAsDate=new Date();
 
-/* --- EXISTING JS LOGIC CONTINUES (unchanged) --- */
+/* SAVE */
+function saveExpense(){
+  const data={
+    action:expenseId.value?"EDIT":"ADD",
+    expenseId:expenseId.value,
+    date:date.value,
+    enteredBy:enteredBy.value,
+    category:category.value,
+    location:location.value,
+    description:desc.value,
+    amount:amount.value
+  };
+
+  const file=invoice.files[0];
+  if(file){
+    const r=new FileReader();
+    r.onload=()=>{ data.invoiceBase64=r.result; send(data); };
+    r.readAsDataURL(file);
+  } else send(data);
+}
+
+function send(data){
+  fetch(API,{method:"POST",body:JSON.stringify(data)})
+    .then(r=>r.json())
+    .then(()=>{
+      resetForm();
+      loadAll();
+    });
+}
+
+/* LOAD LAST 10 + SUMMARY */
+function loadAll(){
+  // Last 10
+  fetch(API,{method:"POST",body:JSON.stringify({action:"LIST"})})
+    .then(r=>r.json())
+    .then(rows=>{
+      const last=rows.slice(-10).reverse();
+      let h="<tr><th>Category</th><th>Location</th><th>Amount</th></tr>";
+      last.forEach(r=>{
+        h+=`<tr onclick='edit("${r[0]}",${JSON.stringify(r)})'>
+          <td>${r[3]}</td><td>${r[4]}</td><td>₹${r[6]}</td></tr>`;
+      });
+      recentTbl.innerHTML=h;
+    });
+
+  // Summary
+  fetch(API,{method:"POST",body:JSON.stringify({action:"SUMMARY"})})
+    .then(r=>r.json())
+    .then(d=>{
+      summary.innerHTML =
+        buildSummaryTable(d.category,"Category") +
+        "<br>" +
+        buildSummaryTable(d.location,"Location");
+    });
+}
+
+function buildSummaryTable(obj,label){
+  let h=`<table><tr><th>${label}</th><th>Amount</th></tr>`;
+  Object.keys(obj).sort((a,b)=>obj[b]-obj[a]).forEach(k=>{
+    h+=`<tr><td>${k}</td><td>₹${obj[k]}</td></tr>`;
+  });
+  return h+"</table>";
+}
+
+/* EDIT */
+function edit(id,row){
+  expenseId.value=id;
+  date.value=row[1];
+  enteredBy.value=row[2];
+  category.value=row[3];
+  location.value=row[4];
+  desc.value=row[5];
+  amount.value=row[6];
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* PDF */
+function downloadPDF(){
+  fetch(API,{
+    method:"POST",
+    body:JSON.stringify({action:"PDF",from:from.value,to:to.value})
+  })
+  .then(r=>r.text())
+  .then(b=>{
+    const a=document.createElement("a");
+    a.href="data:application/pdf;base64,"+b;
+    a.download="Expense_Report.pdf";
+    a.click();
+  });
+}
+
+function resetForm(){
+  document.querySelectorAll("input,select").forEach(e=>e.value="");
+  date.valueAsDate=new Date();
+  expenseId.value="";
+}
+
+loadAll();
 </script>
 
 </body>
